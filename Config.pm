@@ -12,11 +12,14 @@ use DBIx::Connector;
 use JSON::XS;
 use POSIX 'strftime';
 use Time::HiRes 'gettimeofday', 'tv_interval';
+use RDF::Trine 'iri';
+use RDF::Trine::Store;
 use Module::Load;
 
 use Note::Param;
 use Note::File::JSON;
 use Note::SQL::Database;
+use Note::RDF::Sparql;
 
 no warnings qw(uninitialized);
 
@@ -98,6 +101,14 @@ sub setup
 				# DBI SQL Database: MySQL, SQLite, etc...
 				my $name = $k;
 				$stores->{$name} = new Note::SQL::Database($dsrec);
+			}
+			elsif ($dsrec->{'type'} eq 'sparql')
+			{
+				my $name = $k;
+				$stores->{$name} = new Note::RDF::Sparql(
+					'endpoint' => $dsrec->{'endpoint'},
+					'context' => iri($dsrec->{'context'}),
+				);
 			}
 			else
 			{

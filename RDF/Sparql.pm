@@ -308,7 +308,7 @@ sub build_sparql
 		unless ($param->{'from'} eq '0')
 		{
 			$sparql .= 'FROM ';
-			$sparql .= $obj->context()->as_ntriples();
+			$sparql .= '<'. $param->{'from'}. '>';
 			$sparql .= "\n";
 		}
 	}
@@ -336,6 +336,10 @@ sub build_sparql
 		}
 		$sparql .= "}\n";
 	}
+	if ($param->{'group'})
+	{
+		$sparql .= "GROUP BY $param->{'group'}\n";
+	}
 	if ($param->{'order'})
 	{
 		$sparql .= "ORDER BY $param->{'order'}\n";
@@ -343,6 +347,10 @@ sub build_sparql
 	if ($param->{'limit'})
 	{
 		$sparql .= "LIMIT $param->{'limit'}\n";
+		if ($param->{'offset'})
+		{
+			$sparql .= "OFFSET $param->{'offset'}\n";
+		}
 	}
 	print STDERR ("SPARQL:\n$sparql") if ($param->{'debug'});
 	unless ($param->{'query'} eq '0')

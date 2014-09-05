@@ -20,6 +20,7 @@ BEGIN: {
 		'frbr' => 'http://purl.org/vocab/frbr/core#',
 		'geo' => 'http://www.w3.org/2003/01/geo/wgs84_pos#',
 		'gr' => 'http://purl.org/goodrelations/v1#',
+		'gn' => 'http://www.geonames.org/ontology#',
 		'ical' => 'http://www.w3.org/2002/12/cal/ical#',
 		'og' => 'http://ogp.me/ns#',
 		'org' => 'http://www.w3.org/ns/org#',
@@ -39,7 +40,7 @@ BEGIN: {
 		'wot' => 'http://xmlns.com/wot/0.1/',
 		'xhv' => 'http://www.w3.org/1999/xhtml/vocab#',
 		'xsd' => 'http://www.w3.org/2001/XMLSchema#',
-		'atx' => 'http://db.atellix.com/',
+		'atx' => 'http://rdf.atellix.com/',
 	);
 	setup_ns();
 };

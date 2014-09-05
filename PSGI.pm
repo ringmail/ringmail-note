@@ -165,6 +165,7 @@ sub build_page
 		$param->{'response'}->status(404);
 		$param->{'response'}->content_type('text/plain');
 		$param->{'response'}->body('Not found');
+		return;
 	}
 	unless ($page->isa('Note::Page'))
 	{
@@ -275,7 +276,6 @@ sub run_psgi
 			::_errorlog("Build Page Error", $@);
 			$res->content_type('text/plain');
 			$res->status(500);
-			#$res->status(200);
 			$res->body($@);
 			$res->content_length(length($@));
 		}

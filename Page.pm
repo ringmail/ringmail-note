@@ -173,7 +173,7 @@ sub init
 {
 	my ($obj) = shift;
 	# load session
-	$obj->session();
+	#$obj->session();
 	my $data = $obj->data();
 	if (exists($data->{'init'}) && reftype($data->{'init'}) eq 'ARRAY')
 	{

@@ -6,6 +6,7 @@ use vars qw();
 
 use Moose;
 use Module::Load;
+use Module::Refresh;
 
 use Note::Param;
 no warnings qw(uninitialized);
@@ -61,6 +62,12 @@ sub dispatch
 			my $pgclass = $data->{'class'};
 			# read perl package for class
 			load($pgclass);
+
+			# refresh module for development
+			my $classpath = $pgclass. '.pm';
+			$classpath =~ s/::/\//g;
+			Module::Refresh->refresh_module($classpath);
+
 			# create instance
 			$page = $pgclass->new($param);
 		}

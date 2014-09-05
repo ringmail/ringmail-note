@@ -16,6 +16,7 @@ use JSON::XS;
 use POSIX 'strftime';
 use Time::HiRes 'gettimeofday', 'tv_interval';
 use Module::Load;
+use Module::Refresh;
 
 $Note::Config::Load = 0;
 use Note::Config;
@@ -105,6 +106,7 @@ has 'storage' => (
 sub setup
 {
 	my ($obj, $param) = get_param(@_);
+	Module::Refresh->new();
 	my $cfg = new Note::Config($param);
 	$cfg->setup();
 	$obj->root($cfg->root());
@@ -185,6 +187,7 @@ sub run_psgi
 {
 	my $obj = shift;
 	my $env = shift;
+	Module::Refresh->refresh();
 	#print STDERR Dumper($env);
 	my $req = new Plack::Request($env);
 	my $form = { $req->parameters()->flatten() };

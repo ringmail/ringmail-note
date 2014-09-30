@@ -13,9 +13,11 @@ use RDF::Trine::Store;
 use RDF::Query;
 use RDF::Query::Client;
 use Scalar::Util ('blessed', 'reftype');
+use DBI;
 
 use Note::Param;
 use Note::RDF::NS ('ns_iri', 'rdf_ns');
+use Note::RDF::SAXHandler;
 
 no warnings qw(uninitialized);
 
@@ -31,6 +33,11 @@ has 'context' => (
 has 'endpoint' => (
 	'is' => 'rw',
 	'isa' => 'Str',
+);
+
+has 'dbh' => (
+	'is' => 'rw',
+	'isa' => 'DBI::db',
 );
 
 has 'model' => (
@@ -93,8 +100,26 @@ sub query
 {
 	my ($obj, $param) = get_param(@_);
 	my $endp = $obj->endpoint();
+	my $dbh = $obj->dbh();
 	my $iter = undef;
-	if (defined $endp)
+	if (defined $dbh)
+	{
+		my $sth = $dbh->prepare('SPARQL define output:format "RDF/XML" '. $param->{'sparql'});
+		$sth->execute() or die('DBI Error: '. $dbh->errstr());
+		$sth->bind_col(1, undef, {TreatAsLOB=>1});
+		my $res = $sth->fetchrow_arrayref();
+		my $rdf = '';
+		while($sth->odbc_lob_read(1, \my $data, 1024)) {
+			$rdf .= $data;
+		}
+		open( my $fh, '<', \$rdf );
+		my $handler = Note::RDF::SAXHandler->new();
+		my $p = XML::SAX::ParserFactory->parser(Handler => $handler);
+		$p->parse_file( $fh );
+		my $iter = $handler->iterator();
+		return $iter;
+	}
+	elsif (defined $endp)
 	{
 		my $cli = new RDF::Query::Client($param->{'sparql'});
 		$iter = $cli->execute($endp);

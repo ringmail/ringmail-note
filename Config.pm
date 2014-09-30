@@ -110,6 +110,16 @@ sub setup
 					'context' => iri($dsrec->{'context'}),
 				);
 			}
+			elsif ($dsrec->{'type'} eq 'sparql-odbc')
+			{
+				my $name = $k;
+				my $dbh = DBI->connect('dbi:ODBC:DSN='. $dsrec->{'dsn'}, $dsrec->{'login'}, $dsrec->{'password'}) or die('DBI Error: '. DBI->errstr());
+				$dbh->{'odbc_ignore_named_placeholders'} = 1;
+				$stores->{$name} = new Note::RDF::Sparql(
+					'dbh' => $dbh,
+					'context' => iri($dsrec->{'context'}),
+				);
+			}
 			else
 			{
 				die(qq|Unknown data store type: '$dsrec->{'type'}'|);

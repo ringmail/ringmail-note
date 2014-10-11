@@ -13,11 +13,13 @@ use RDF::Trine::Store;
 use RDF::Query;
 use RDF::Query::Client;
 use Scalar::Util ('blessed', 'reftype');
+use Encode;
 use DBI;
 
 use Note::Param;
 use Note::RDF::NS ('ns_iri', 'rdf_ns');
 use Note::RDF::SAXHandler;
+use Note::RDF::SAXHandlerGraph;
 
 no warnings qw(uninitialized);
 
@@ -70,16 +72,13 @@ has 'storage' => (
 	},
 );
 
-sub get_resource
+sub get_resource_model
 {
 	my ($obj, $rsrc) = @_;
-	my $ctxt = $obj->context();
-	my $sto = $obj->storage();
-	my $propiter = $sto->get_statements(
+	my $propiter = $obj->get_statements(
 		$rsrc,
 		undef,
 		undef,
-		$ctxt,
 	);
 	my $model = new RDF::Trine::Model();
 	$model->add_iterator($propiter);
@@ -104,7 +103,7 @@ sub query
 	my $iter = undef;
 	if (defined $dbh)
 	{
-		my $sth = $dbh->prepare('SPARQL define output:format "RDF/XML" '. $param->{'sparql'});
+		my $sth = $dbh->prepare('SPARQL define output:format "RDF/XML" '. $param->{'sparql'}) or die('DBI Error: '. $dbh->errstr());
 		$sth->execute() or die('DBI Error: '. $dbh->errstr());
 		$sth->bind_col(1, undef, {TreatAsLOB=>1});
 		my $res = $sth->fetchrow_arrayref();
@@ -112,10 +111,18 @@ sub query
 		while($sth->odbc_lob_read(1, \my $data, 1024)) {
 			$rdf .= $data;
 		}
+		$rdf = encode('UTF-8', $rdf);
 		open( my $fh, '<', \$rdf );
 		my $handler = Note::RDF::SAXHandler->new();
 		my $p = XML::SAX::ParserFactory->parser(Handler => $handler);
-		$p->parse_file( $fh );
+		eval {
+			$p->parse_file( $fh );
+		};
+		if ($@)
+		{
+			print STDERR "XML Parse Failed:\n$rdf---\n";
+			die($@);
+		}
 		my $iter = $handler->iterator();
 		return $iter;
 	}
@@ -156,7 +163,28 @@ sub insert
 	}
 	my $ctxt = $obj->context();
 	my $endp = $obj->endpoint();
-	if (defined $endp)
+	my $dbh = $obj->dbh();
+	if (defined $dbh)
+	{
+		my $sparql = 'SPARQL define output:format "RDF/XML" INSERT IN GRAPH '. $ctxt->as_ntriples(). ' { ';
+		$sparql .= join(' ', map { $_->as_ntriples() } $stmt->nodes()). '.';
+		$sparql .= ' }';
+		#::_log("ODBC Sparql:". $sparql);
+		my $sth = $dbh->prepare($sparql) or die('DBI Error: '. $dbh->errstr());
+		#::_log("ODBC Prepared");
+		$sth->execute() or die('DBI Error: '. $dbh->errstr());
+		#::_log("ODBC Executed");
+		$sth->bind_col(1, undef, {TreatAsLOB=>1});
+		my $res = $sth->fetchrow_arrayref();
+		my $output = '';
+		while($sth->odbc_lob_read(1, \my $data, 1024)) {
+			$output .= $data;
+		}
+		$output = encode('UTF-8', $output);
+		return $output;
+		#::_log("ODBC Insert Output:", $output);
+	}
+	elsif (defined $endp)
 	{
 		my $sparql = 'INSERT IN GRAPH '. $ctxt->as_ntriples(). ' { ';
 		$sparql .= join(' ', map { $_->as_ntriples() } $stmt->nodes()). '.';
@@ -190,7 +218,28 @@ sub delete
 	}
 	my $ctxt = $obj->context();
 	my $endp = $obj->endpoint();
-	if (defined $endp)
+	my $dbh = $obj->dbh();
+	if (defined $dbh)
+	{
+		my $sparql = 'SPARQL define output:format "RDF/XML" DELETE FROM GRAPH '. $ctxt->as_ntriples(). ' { ';
+		$sparql .= join(' ', map { $_->as_ntriples() } $stmt->nodes()). '.';
+		$sparql .= ' }';
+		#::_log("ODBC Sparql:". $sparql);
+		my $sth = $dbh->prepare($sparql) or die('DBI Error: '. $dbh->errstr());
+		#::_log("ODBC Prepared");
+		$sth->execute() or die('DBI Error: '. $dbh->errstr());
+		#::_log("ODBC Executed");
+		$sth->bind_col(1, undef, {TreatAsLOB=>1});
+		my $res = $sth->fetchrow_arrayref();
+		my $output = '';
+		while($sth->odbc_lob_read(1, \my $data, 1024)) {
+			$output .= $data;
+		}
+		$output = encode('UTF-8', $output);
+		return $output;
+		#::_log("ODBC Insert Output:", $output);
+	}
+	elsif (defined $endp)
 	{
 		my $sparql = 'DELETE FROM GRAPH '. $ctxt->as_ntriples(). ' { ';
 		$sparql .= join(' ', map { $_->as_ntriples() } $stmt->nodes());
@@ -211,6 +260,70 @@ sub delete
 sub get_statements
 {
 	my ($obj, $subj, $pred, $val) = @_;
+	my $dbh = $obj->dbh();
+	if (defined $dbh)
+	{
+		my @whr = ();
+		my @sel = ();
+		my %wg = ();
+		if (defined $subj)
+		{
+			$whr[0] = $subj;
+			$wg{'s'} = $subj;
+		}
+		else
+		{
+			$whr[0] = '?s';
+			push @sel, '?s';
+		}
+		if (defined $pred)
+		{
+			$whr[1] = $pred;
+			$wg{'p'} = $pred;
+		}
+		else
+		{
+			$whr[1] = '?p';
+			push @sel, '?p';
+		}
+		if (defined $val)
+		{
+			$whr[2] = $val;
+			$wg{'v'} = $val;
+		}
+		else
+		{
+			$whr[2] = '?v';
+			push @sel, '?v';
+		}
+		my $sparql = $obj->build_sparql(
+			'query' => 0,
+			'select' => \@sel,
+			'where' => [\@whr],
+		);
+		my $sth = $dbh->prepare('SPARQL define output:format "RDF/XML" '. $sparql) or die('DBI Error: '. $dbh->errstr());
+		$sth->execute() or die('DBI Error: '. $dbh->errstr());
+		$sth->bind_col(1, undef, {TreatAsLOB=>1});
+		my $res = $sth->fetchrow_arrayref();
+		my $rdf = '';
+		while($sth->odbc_lob_read(1, \my $data, 1024)) {
+			$rdf .= $data;
+		}
+		$rdf = encode('UTF-8', $rdf);
+		open( my $fh, '<', \$rdf );
+		my $handler = Note::RDF::SAXHandlerGraph->new(\%wg);
+		my $p = XML::SAX::ParserFactory->parser(Handler => $handler);
+		eval {
+			$p->parse_file( $fh );
+		};
+		if ($@)
+		{
+			print STDERR "XML Parse Failed:\n$rdf\n---\n";
+			die($@);
+		}
+		my $iter = $handler->iterator();
+		return $iter;
+	}
 	return $obj->storage()->get_statements($subj, $pred, $val, $obj->context());
 }
 
@@ -225,84 +338,125 @@ sub build_sparql
 		%prefix = %{$param->{'prefix'}};
 	}
 	my @where = ();
+	my $build_where = sub {
+		my $wh = shift;
+		if (! ref($wh->[0]))
+		{
+			if ($wh->[0] =~ /^\?/)
+			{
+				$ks{$wh->[0]} = 1;
+			}
+			elsif ($wh->[0] =~ /^(\w+)\:$/)
+			{
+				$prefix{$1} ||= rdf_ns($1);
+			}
+		}
+		else
+		{
+			$wh->[0] = $wh->[0]->as_ntriples();
+		}
+		if (! ref($wh->[1]))
+		{
+			if ($wh->[1] =~ /^\?/)
+			{
+				$ks{$wh->[1]} = 1;
+			}
+			elsif ($wh->[1] =~ /^(\w+)\:/)
+			{
+				$prefix{$1} ||= rdf_ns($1);
+			}
+		}
+		else
+		{
+			$wh->[1] = $wh->[1]->as_ntriples();
+		}
+		if (! ref($wh->[2]))
+		{
+			if ($wh->[2] =~ /^\?/)
+			{
+				$ks{$wh->[2]} = 1;
+			}
+			elsif ($wh->[2] =~ /^(\w+)\:/)
+			{
+				$prefix{$1} ||= rdf_ns($1);
+			}
+		}
+		elsif (! blessed($wh->[2]))
+		{
+			if (reftype($wh->[2]) eq 'SCALAR')
+			{
+				$wh->[2] = literal(${$wh->[2]}, undef, ns_iri('xsd', 'string'))->as_ntriples();
+			}
+			elsif (reftype($wh->[2]) eq 'ARRAY')
+			{
+				my $ty = $wh->[2]->[1];
+				if (blessed($ty) && $ty->isa('RDF::Trine::Node::Resource'))
+				{
+					$wh->[2] = literal($wh->[2]->[0], undef, $ty)->as_ntriples();
+				}
+				else
+				{
+					$ty =~ /^(\w+)\:(.*)$/;
+					$prefix{$1} ||= rdf_ns($1);
+					$wh->[2] = literal($wh->[2]->[0], undef, ns_iri($1, $2))->as_ntriples();
+				}
+			}
+		}
+		else
+		{
+			$wh->[2] = $wh->[2]->as_ntriples();
+		}
+	};
+	my $where_iter;
+	$where_iter = sub {
+		my $where = shift;
+		my @res = ();
+		foreach my $wh (@$where)
+		{
+			unless (reftype($wh) eq 'ARRAY')
+			{
+				die(qq|Invalid where clause: '$wh'|);
+			}
+			if (
+				(! ref($wh->[0])) &&
+				$wh->[0] =~ /^optional$/i &&
+				ref($wh->[1]) && reftype($wh->[1]) eq 'ARRAY'
+			) {
+				my $sparql = "OPTIONAL {\n";
+				my @part = $where_iter->($wh->[1]);
+				$sparql .= join("\n", map {"\t$_"} @part). "\n";
+				if (ref($wh->[2]) && reftype($wh->[2]) eq 'HASH')
+				{
+					my $flt = $wh->[2];
+					if (ref($flt))
+					{
+						$flt = $obj->_sparql_filter($flt);
+					}
+					if (defined $flt)
+					{
+						$sparql .= "FILTER $flt";
+					}
+				}
+				$sparql .= "}\n";
+				push @res, $sparql;
+			}
+			else
+			{
+				$build_where->($wh);
+				push @res, join(' ', @$wh). '.';
+			}
+		}
+		return @res;
+	};
 	if (exists($param->{'where'}))
 	{
-		if (reftype($param->{'where'}) eq 'ARRAY')
+		if (ref($param->{'where'}) && reftype($param->{'where'}) eq 'ARRAY')
 		{
-			foreach my $wh (@{$param->{'where'}})
-			{
-				unless (reftype($wh) eq 'ARRAY')
-				{
-					die(qq|Invalid where clause: '$wh'|);
-				}
-				if (! ref($wh->[0]))
-				{
-					if ($wh->[0] =~ /^\?/)
-					{
-						$ks{$wh->[0]} = 1;
-					}
-					elsif ($wh->[0] =~ /^(\w+)\:$/)
-					{
-						$prefix{$1} ||= rdf_ns($1);
-					}
-				}
-				else
-				{
-					$wh->[0] = $wh->[0]->as_ntriples();
-				}
-				if (! ref($wh->[1]))
-				{
-					if ($wh->[1] =~ /^\?/)
-					{
-						$ks{$wh->[1]} = 1;
-					}
-					elsif ($wh->[1] =~ /^(\w+)\:/)
-					{
-						$prefix{$1} ||= rdf_ns($1);
-					}
-				}
-				else
-				{
-					$wh->[1] = $wh->[1]->as_ntriples();
-				}
-				if (! ref($wh->[2]))
-				{
-					if ($wh->[2] =~ /^\?/)
-					{
-						$ks{$wh->[2]} = 1;
-					}
-					elsif ($wh->[2] =~ /^(\w+)\:/)
-					{
-						$prefix{$1} ||= rdf_ns($1);
-					}
-				}
-				elsif (! blessed($wh->[2]))
-				{
-					if (reftype($wh->[2]) eq 'SCALAR')
-					{
-						$wh->[2] = literal(${$wh->[2]}, undef, ns_iri('xsd', 'string'))->as_ntriples();
-					}
-					elsif (reftype($wh->[2]) eq 'ARRAY')
-					{
-						my $ty = $wh->[2]->[1];
-						if (blessed($ty) && $ty->isa('RDF::Trine::Node::Resource'))
-						{
-							$wh->[2] = literal($wh->[2]->[0], undef, $ty)->as_ntriples();
-						}
-						else
-						{
-							$ty =~ /^(\w+)\:(.*)$/;
-							$prefix{$1} ||= rdf_ns($1);
-							$wh->[2] = literal($wh->[2]->[0], undef, ns_iri($1, $2))->as_ntriples();
-						}
-					}
-				}
-				else
-				{
-					$wh->[2] = $wh->[2]->as_ntriples();
-				}
-				push @where, join(' ', @$wh). '.';
-			}
+			push @where, $where_iter->($param->{'where'});
+		}
+		elsif ((! ref($param->{'where'})) && length($param->{'where'}))
+		{
+			push @where, $param->{'where'};
 		}
 	}
 	#print STDERR Dumper(\%prefix);

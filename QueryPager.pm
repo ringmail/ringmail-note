@@ -1,11 +1,13 @@
-package Note::Container;
+package Note::QueryPager;
 use strict;
 use warnings;
 
 use vars qw();
 
-use Note::Param;
 use Moose;
+use Data::Pageset;
+
+use Note::Param;
 
 # container base class
 
@@ -65,7 +67,7 @@ sub get_page
 	return [@{$obj->data()}[$offset..$top]] # return a slice of the array
 }
 
-sub get_count_pages
+sub get_page_count
 {
 	my ($obj) = @_;
 	my $count = $obj->get_count();
@@ -89,6 +91,34 @@ sub get_offset
 		return 0;
 	}
 	return (($page - 1) * $max);
+}
+
+sub get_page_list
+{
+	my ($obj, $param) = get_param(@_);
+	my $page = $param->{'page'};
+	unless ($page =~ /^\d+$/ && $page > 0)
+	{
+		die(qq|Invalid page: '$page'|);
+	}
+	my $max = $obj->page_size();
+	my $count = $obj->get_count();
+	my $pages = $obj->get_page_count();
+	my $size = $param->{'list_size'} || 10;
+	if ($pages <= $size)
+	{
+		return [1..$pages];
+	}
+	my $ps = new Data::Pageset({
+		'total_entries' => $count,
+		'entries_per_page' => $max,
+		'current_page' => $page,
+		'pages_per_set' => $size,
+		'mode' => 'slide',
+	});
+	my @pages = @{$ps->pages_in_set()};
+	
+	return \@pages;
 }
 
 1;

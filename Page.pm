@@ -563,6 +563,17 @@ sub field
 			}],
 		);
 	}
+	elsif ($type eq 'email')
+	{
+		return xml(
+			'input', [{
+				'type' => 'email',
+				'value' => $param->{'value'},
+				'name' => $n,
+				%opts,
+			}],
+		);
+	}
 	elsif ($type eq 'password')
 	{
 		return xml(

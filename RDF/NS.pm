@@ -10,6 +10,8 @@ BEGIN: {
 	@ISA = qw(Exporter);
 	@EXPORT_OK = qw(ns_uri ns_iri rdf_ns rdf_prefix ns_match);
 	our %xmlns = (
+		'atx' => 'http://schema.atellix.com/v1/',
+		'data' => 'http://data.atellix.com/v1/',
 		'bibo' => 'http://purl.org/ontology/bibo/',
 		'bio' => 'http://purl.org/vocab/bio/0.1/',
 		'cc' => 'http://creativecommons.org/ns#',
@@ -40,7 +42,6 @@ BEGIN: {
 		'wot' => 'http://xmlns.com/wot/0.1/',
 		'xhv' => 'http://www.w3.org/1999/xhtml/vocab#',
 		'xsd' => 'http://www.w3.org/2001/XMLSchema#',
-		'atx' => 'http://rdf.atellix.com/',
 	);
 	setup_ns();
 };

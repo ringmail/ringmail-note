@@ -1,4 +1,4 @@
-package Note::RDF::Container;
+package Note::RDF::QueryPager;
 use strict;
 use warnings;
 
@@ -8,9 +8,9 @@ use Moose;
 
 use Note::Param;
 use Note::RDF::Sparql;
-use Note::Container;
+use Note::QueryPager;
 
-use base ('Note::Container');
+use base ('Note::QueryPager');
 
 # SPARQL paged query container
 
@@ -32,7 +32,6 @@ has 'sparql' => (
 	'required' => 1,
 );
 
-# overload this
 sub get_count
 {
 	my ($obj) = @_;
@@ -58,7 +57,6 @@ sub get_count
 	return $count;
 }
 
-# overload this
 sub get_page
 {
 	my ($obj, $param) = get_param(@_);
@@ -77,26 +75,8 @@ sub get_page
 		$query->{'limit'} = $max;
 	}
 	my $iter = $sp->build_sparql($query);
-	my @res = ();
-	while (my $r = $iter->next())
-	{
-		push @res, $r;
-	}
-	return \@res;
-}
-
-sub get_count_pages
-{
-	my ($obj) = @_;
-	my $count = $obj->get_count();
-	my $max = $obj->page_size();
-	unless (defined $max)
-	{
-		return 1; # 1 page for all items
-	}
-	my $md = $count % $max;
-	my $i = ($count - $md) / $max;
-	return $i + (($md > 0) ? 1 : 0);
+	return $iter;
 }
 
 1;
+

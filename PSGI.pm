@@ -173,7 +173,7 @@ sub build_page
 	{
 		die('Not an instance of Note::Page or its subclass.');
 	}
-	if ($page->init())
+	if ($page->init($param))
 	{
 		$page->run_command();
 		${$param->{'body'}} = $page->load($param);

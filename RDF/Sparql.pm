@@ -15,6 +15,7 @@ use RDF::Query::Client;
 use Scalar::Util ('blessed', 'reftype');
 use Encode;
 use DBI;
+use Carp;
 
 use Note::Param;
 use Note::RDF::NS ('ns_iri', 'rdf_ns');
@@ -74,14 +75,50 @@ has 'storage' => (
 
 sub get_resource_model
 {
-	my ($obj, $rsrc) = @_;
+	my ($obj, $rsrc, $model) = @_;
 	my $propiter = $obj->get_statements(
 		$rsrc,
 		undef,
 		undef,
 	);
-	my $model = new RDF::Trine::Model();
+	$model ||= new RDF::Trine::Model();
 	$model->add_iterator($propiter);
+	return $model;
+}
+
+sub get_expanded_model
+{
+	my ($obj, $rsrc, $model) = @_;
+	my $sameAs = ns_iri('owl', 'sameAs')->uri_value();
+	my $qry = $obj->build_sparql(
+		'from' => 0,
+		#'debug' => 1,
+		'select' => ['distinct ?same'],
+		'where' => <<WHERE,
+{
+	{
+		SELECT ?item ?same
+		WHERE {
+			{
+				?item <$sameAs> ?same
+			} UNION {
+				?same <$sameAs> ?item
+			}
+		}
+	}
+	OPTION (transitive, t_in (?item), t_out (?same), t_distinct, t_min (0))
+}
+WHERE
+		'filter' => {
+			'?item' => $rsrc,
+		},
+	);
+	$model ||= new RDF::Trine::Model();
+	while (my $r = $qry->next())
+	{
+		#::_log($r);
+		$obj->get_resource_model($r->{'same'}, $model);
+	}
 	return $model;
 }
 
@@ -105,22 +142,21 @@ sub query
 	{
 		my $sth = $dbh->prepare('SPARQL define output:format "RDF/XML" '. $param->{'sparql'}) or die('DBI Error: '. $dbh->errstr());
 		$sth->execute() or die('DBI Error: '. $dbh->errstr());
-		$sth->bind_col(1, undef, {TreatAsLOB=>1});
+		$sth->bind_col(1, undef, {'TreatAsLOB' => 1});
 		my $res = $sth->fetchrow_arrayref();
 		my $rdf = '';
 		while($sth->odbc_lob_read(1, \my $data, 1024)) {
 			$rdf .= $data;
 		}
 		$rdf = encode('UTF-8', $rdf);
-		open( my $fh, '<', \$rdf );
 		my $handler = Note::RDF::SAXHandler->new();
 		my $p = XML::SAX::ParserFactory->parser(Handler => $handler);
 		eval {
-			$p->parse_file( $fh );
+			$p->parse_string($rdf);
 		};
 		if ($@)
 		{
-			print STDERR "XML Parse Failed:\n$rdf---\n";
+			print STDERR "XML Parse Failed:\n$rdf\n---\n";
 			die($@);
 		}
 		my $iter = $handler->iterator();
@@ -298,23 +334,23 @@ sub get_statements
 		}
 		my $sparql = $obj->build_sparql(
 			'query' => 0,
+			'from' => 0,
 			'select' => \@sel,
 			'where' => [\@whr],
 		);
 		my $sth = $dbh->prepare('SPARQL define output:format "RDF/XML" '. $sparql) or die('DBI Error: '. $dbh->errstr());
 		$sth->execute() or die('DBI Error: '. $dbh->errstr());
-		$sth->bind_col(1, undef, {TreatAsLOB=>1});
+		$sth->bind_col(1, undef, {'TreatAsLOB' => 1});
 		my $res = $sth->fetchrow_arrayref();
 		my $rdf = '';
 		while($sth->odbc_lob_read(1, \my $data, 1024)) {
 			$rdf .= $data;
 		}
 		$rdf = encode('UTF-8', $rdf);
-		open( my $fh, '<', \$rdf );
 		my $handler = Note::RDF::SAXHandlerGraph->new(\%wg);
-		my $p = XML::SAX::ParserFactory->parser(Handler => $handler);
+		my $p = XML::SAX::ParserFactory->parser('Handler' => $handler);
 		eval {
-			$p->parse_file( $fh );
+			$p->parse_string($rdf);
 		};
 		if ($@)
 		{
@@ -340,6 +376,7 @@ sub build_sparql
 	my @where = ();
 	my $build_where = sub {
 		my $wh = shift;
+		my $extra = '';
 		if (! ref($wh->[0]))
 		{
 			if ($wh->[0] =~ /^\?/)
@@ -360,6 +397,15 @@ sub build_sparql
 			if ($wh->[1] =~ /^\?/)
 			{
 				$ks{$wh->[1]} = 1;
+			}
+			elsif ($wh->[1] eq 'bif:contains') # OpenLink Virtuoso Extension - Full Text Search
+			{
+				if ($wh->[3] =~ /^\s*option/i)
+				{
+					$extra = $wh->[3];
+					$wh->[3] = undef;
+					$#{$wh} = 2;
+				}
 			}
 			elsif ($wh->[1] =~ /^(\w+)\:/)
 			{
@@ -406,6 +452,10 @@ sub build_sparql
 		{
 			$wh->[2] = $wh->[2]->as_ntriples();
 		}
+		if ($extra)
+		{
+			$wh->[2] .= ' '. $extra;
+		}
 	};
 	my $where_iter;
 	$where_iter = sub {
@@ -438,6 +488,21 @@ sub build_sparql
 					}
 				}
 				$sparql .= "}\n";
+				push @res, $sparql;
+			}
+			elsif (
+				(! ref($wh->[0])) &&
+				$wh->[0] =~ /^union$/i &&
+				ref($wh->[1]) && reftype($wh->[1]) eq 'ARRAY'
+			) {
+				my @union = ();
+				foreach my $nextwh (@{$wh->[1]})
+				{
+					my @part = $where_iter->($nextwh);
+					my $element = join("\n", map {"\t$_"} @part). "\n";
+					push @union, $element;
+				}
+				my $sparql = join 'UNION ', map {"{\n$_\n}\n"} @union;
 				push @res, $sparql;
 			}
 			else
@@ -501,6 +566,10 @@ sub build_sparql
 	{
 		$sparql .= "WHERE {\n";
 		$sparql .= join("\n", map {"\t$_"} @where). "\n";
+		if (exists $param->{'option'}) # Virtuoso OPTION - for TRANSITIVE operation
+		{
+			$sparql .= "OPTION (\n$param->{'option'}\n) .\n";
+		}
 		if (exists $param->{'filter'})
 		{
 			my $flt = $param->{'filter'};

@@ -6,7 +6,7 @@ no warnings qw(uninitialized);
 BEGIN: {
 	use base 'Exporter';
 	use vars qw(@EXPORT @EXPORT_OK %states);
-	@EXPORT_OK = qw(us_states us_state_name);
+	@EXPORT_OK = qw(us_states us_state_name us_territories);
 	use Geography::States;
 	our %states = ();
 };
@@ -23,6 +23,11 @@ END: {
 sub us_states
 {
 	return [sort keys %states];
+}
+
+sub us_territories
+{
+	return [qw/GU MH MP FM AS VI PW PR/];
 }
 
 sub us_state_name

@@ -73,15 +73,15 @@ has 'id' => (
 			{
 				$sid = $obj->database()->table('note_session')->get(
 					'array' => 1,
-					'result' => 1,
-					'select' => 'id',
+					'select' => ['id', 'data'],
 					'where' => {
 						'skey' => $skey,
 					},
 				);
-				if (defined $sid)
+				if (scalar @$sid)
 				{
-					return $sid;
+					$obj->{'cache'} = thaw($sid->[0]->[1]);
+					return $sid->[0]->[0];
 				}
 			}
 			elsif ($type eq 'file')
@@ -132,20 +132,21 @@ sub create
 	if ($type eq 'sql')
 	{
 		my $db = $obj->database();
-		$id = $obj->sequence()->nextid();
+		#$id = $obj->sequence()->nextid();
 		my $tbl = $db->table('note_session');
 		$skey = $obj->random_key($tbl);
 		$tbl->set(
 			'insert' => {
-				'id' => $id,
+				#'id' => $id,
 				'skey' => $skey,
-				'ipv4_addr' => ["inet_aton('$ipaddr')"],
+				'ipv4_addr' => $ipaddr,
 				'ts_expires' => strftime("%F %T", localtime($expires)),
 				'ts_created' => strftime("%F %T", localtime()),
 				'secure' => $secure,
 				'data' => nfreeze({}),
 			},
 		);
+		$id = $tbl->last_insert_id();
 	}
 	elsif ($type eq 'file')
 	{
@@ -179,6 +180,10 @@ sub get
 	my $type = $obj->type();
 	if ($type eq 'sql')
 	{
+		if (defined $obj->{'cache'})
+		{
+			return $obj->{'cache'};
+		}
 		my $db = $obj->database();
 		my $v = $db->table('note_session')->get(
 			'array' => 1,
@@ -228,6 +233,7 @@ sub set
 				'id' => $id,
 			},
 		);
+		$obj->{'cache'} = $v;
 	}
 	elsif ($type eq 'file')
 	{

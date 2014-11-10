@@ -149,6 +149,7 @@ has 'session' => (
 	'lazy' => 1,
 	'default' => sub {
 		my ($obj) = @_;
+		$obj->_session()->id(); # preload cache
 		my $data = $obj->_session()->get();
 		$data ||= {};
 		return $data;
@@ -173,8 +174,11 @@ sub init
 {
 	my ($obj) = shift;
 	# load session
-	#$obj->session();
 	my $data = $obj->data();
+	unless (defined($data->{'session'}) && $data->{'session'} eq '0')
+	{
+		$obj->session();
+	}
 	if (exists($data->{'init'}) && reftype($data->{'init'}) eq 'ARRAY')
 	{
 		my $ok;

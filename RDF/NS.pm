@@ -10,8 +10,15 @@ BEGIN: {
 	@ISA = qw(Exporter);
 	@EXPORT_OK = qw(ns_uri ns_iri rdf_ns rdf_prefix ns_match);
 	our %xmlns = (
+# Atellix
 		'atx' => 'http://schema.atellix.com/v1/',
 		'data' => 'http://data.atellix.com/v1/',
+# Datasets
+		'yago' => 'http://yago-knowledge.org/resource/',
+		'wn2' => 'http://www.w3.org/2006/03/wn/wn20/',
+		'wn3' => 'http://purl.org/vocabularies/princeton/wn30/',
+		'dbp' => 'http://dbpedia.org/',
+# Orig
 		'bibo' => 'http://purl.org/ontology/bibo/',
 		'bio' => 'http://purl.org/vocab/bio/0.1/',
 		'cc' => 'http://creativecommons.org/ns#',

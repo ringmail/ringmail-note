@@ -86,6 +86,47 @@ sub get_resource_model
 	return $model;
 }
 
+sub get_owl_sameas
+{
+	my ($obj, $rsrc) = @_;
+	my $sameAs = ns_iri('owl', 'sameAs')->uri_value();
+	my $qry = $obj->build_sparql(
+		'from' => 0,
+		#'debug' => 1,
+		'select' => ['distinct ?same'],
+		'where' => <<WHERE,
+{
+	{
+		SELECT ?item ?same
+		WHERE {
+			{
+				?item <$sameAs> ?same
+			} UNION {
+				?same <$sameAs> ?item
+			}
+		}
+	}
+	OPTION (transitive, t_in (?item), t_out (?same), t_distinct, t_min (0))
+}
+WHERE
+		'filter' => {
+			'?item' => $rsrc,
+		},
+	);
+	my $orig = $rsrc->uri_value();
+	my @res = ();
+	while (my $r = $qry->next())
+	{
+		next if ($r->{'same'}->uri_value() eq $orig);
+		push @res, $r->{'same'};
+	}
+	@res = sort {
+		$a->uri_value() cmp $b->uri_value()
+	} @res; # sort uris
+	unshift @res, iri($orig); # make original first
+	return \@res;
+}
+
 sub get_expanded_model
 {
 	my ($obj, $rsrc, $model) = @_;
@@ -685,6 +726,29 @@ sub get_rdf_list
 		$list = $i->{'rest'};
 	}
 	return \@res;
+}
+
+sub iri_exists
+{
+	my ($obj, $param) = get_param(@_);
+	my $ir = $param->{'iri'};
+	my $q = $obj->build_sparql(
+		'from' => 0,
+		#'debug' => 1,
+		'select' => ['(count(distinct ?inst) as ?count)'],
+		'where' => [
+			['?inst', '?attr', '?val'],
+		],
+		'filter' => {
+			'?inst' => $ir,
+		},
+	);
+	my $ct = 0;
+	if (my $r = $q->next())
+	{
+		$ct = $r->{'count'}->literal_value();
+	}
+	return $ct;
 }
 
 1;

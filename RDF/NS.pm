@@ -13,6 +13,7 @@ BEGIN: {
 # Atellix
 		'atx' => 'http://schema.atellix.com/v1/',
 		'data' => 'http://data.atellix.com/v1/',
+		'note' => 'http://note.atellix.com/v1/',
 # Datasets
 		'yago' => 'http://yago-knowledge.org/resource/',
 		'wn2' => 'http://www.w3.org/2006/03/wn/wn20/',

@@ -165,10 +165,20 @@ WHERE
 
 sub add_statement
 {
-	my ($obj, $stmt) = @_;
+	my ($obj, $stmt, $prdc, $val) = @_;
 	unless (blessed($stmt) && $stmt->isa('RDF::Trine::Statement'))
 	{
-		die(qq|Invalid statement: '$stmt'|);
+		if (
+			(blessed($stmt) && $stmt->isa('RDF::Trine::Node')) &&
+			(blessed($prdc) && $prdc->isa('RDF::Trine::Node')) &&
+			(blessed($val) && $val->isa('RDF::Trine::Node'))
+		) {
+			$stmt = statement($stmt, $prdc, $val);
+		}
+		else
+		{
+			die(qq|Invalid statement: '$stmt'|);
+		}
 	}
 	$obj->insert('statement' => $stmt);
 }

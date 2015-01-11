@@ -156,6 +156,8 @@ sub build_page
 	#die("test");
 	my ($obj, $param) = get_param(@_);
 	my $start = [gettimeofday()];
+	$Note::Log::start = [gettimeofday()];
+	$Note::Log::timer = [gettimeofday()];
 	$param->{'response'}->status(200); # start with OK
 	#::_log($param);
 	# dispatch page lookup

@@ -15,7 +15,7 @@ has 'file' => (
 
 has 'data' => (
 	'is' => 'rw',
-	'isa' => 'HashRef',
+	'isa' => 'Ref',
 	'default' => sub { return {}; },
 );
 

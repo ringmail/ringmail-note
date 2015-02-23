@@ -5,10 +5,11 @@ no warnings qw(uninitialized);
 
 BEGIN: {
 	use RDF::Trine ('iri');
+	use Scalar::Util ('blessed');
 	use vars qw(@ISA @EXPORT_OK %xmlns %xmlns_reverse @xmlregex @xmlregex_ns @xmlregex_uri);
 	require Exporter;
 	@ISA = qw(Exporter);
-	@EXPORT_OK = qw(ns_uri ns_iri rdf_ns rdf_prefix ns_match);
+	@EXPORT_OK = qw(ns_uri ns_iri rdf_ns rdf_prefix ns_match node_id);
 	our %xmlns = (
 # Atellix
 		'atx' => 'http://schema.atellix.com/v1/',
@@ -137,6 +138,27 @@ sub rdf_prefix_line
 		return $line;
 	}
 	return undef;
+}
+
+sub node_id
+{
+	my ($node) = @_;
+	unless (blessed($node) && $node->isa('RDF::Trine::Node'))
+	{
+		die('Invalid RDF::Trine::Node');
+	}
+	if ($node->is_resource())
+	{
+		return $node->uri_value();
+	}
+	elsif ($node->is_blank())
+	{
+		return $node->blank_identifier();
+	}
+	else
+	{
+		die('Invalid RDF::Trine::Node subclass');
+	}
 }
 
 1;

@@ -738,10 +738,26 @@ sub get_rdf_list
 	return \@res;
 }
 
+# alias method for iri_exists
+sub exists
+{
+	my $obj = shift;
+	$obj->iri_exists(@_);
+}
+
 sub iri_exists
 {
-	my ($obj, $param) = get_param(@_);
-	my $ir = $param->{'iri'};
+	my ($obj, $ir, $param);
+	if (($#_ == 1) && blessed($_[1]) && $_[1]->isa('RDF::Trine::Node::Resource'))
+	{
+		($obj, $ir) = @_;
+		$param = {};
+	}
+	else
+	{	
+		($obj, $param) = get_param(@_);
+		$ir = $param->{'iri'};
+	}
 	my $q = $obj->build_sparql(
 		'from' => 0,
 		#'debug' => 1,

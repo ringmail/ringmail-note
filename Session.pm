@@ -8,6 +8,7 @@ use Storable 'nfreeze', 'thaw';
 use POSIX 'strftime';
 use String::Random;
 use Data::Dumper;
+use CGI::Cookie;
 
 use Note::Param;
 use Note::Page;
@@ -65,13 +66,31 @@ has 'id' => (
 		my $page = $obj->page();
 		my $type = $obj->type();
 		my $cookies = $page->request()->cookies();
-		my $skey = $cookies->{$obj->cookie_key()};
-		my $sid = undef;
-		if (defined($skey) && $skey =~ /^[A-Za-z0-9]{32}$/)
+		#::log("Cookies", $cookies);
+		#my $skey = $cookies->{$obj->cookie_key()};
+		my @cklist = ();
+		my $ckey = $obj->cookie_key();
+		$ckey = quotemeta($ckey);
+		foreach my $ck (keys %$cookies)
 		{
+			if ($ck =~ /^$ckey-(\d{1,11})$/)
+			{
+				my $ts = $1;
+				if ($cookies->{$ck} =~ /^[A-Za-z0-9]{32}$/)
+				{
+					push @cklist, [$ts, $cookies->{$ck}];
+				}
+			}
+		}
+		if (scalar @cklist)
+		{
+			my @cksort = sort { $a->[0] <=> $b->[0] } @cklist;
+			my $skey = $cksort[-1]->[1];
+			#::log("Skey", $skey);
+			#::log("Stype: $type ". $obj->path());
 			if ($type eq 'sql')
 			{
-				$sid = $obj->database()->table('note_session')->get(
+				my $sid = $obj->database()->table('note_session')->get(
 					'array' => 1,
 					'select' => ['id', 'data'],
 					'where' => {
@@ -158,11 +177,12 @@ sub create
 		}
 		print F nfreeze({});
 		close(F);
+		#::log("SCreate: $fpath");
 		$id = $skey;
 	}
 	my $host = $page->env()->{'HTTP_HOST'};
 	$host =~ s/\:.*//;
-	$page->response()->cookies()->{$obj->cookie_key()} = {
+	$page->response()->cookies()->{$obj->cookie_key(). '-'. time()} = {
 		'value' => $skey,
 		'path' => '/',
 		'domain' => $host,

@@ -240,7 +240,7 @@ sub make_schema_property
 			{
 				foreach my $rec (@{$param->{$k}})
 				{
-					::log("$k: ", $rec);
+					#::log("$k: ", $rec);
 					if (blessed($rec) && $rec->isa('RDF::Trine::Node::Resource'))
 					{
 						$sto->add_statement($prop, ns_iri('rdfs', $k), $rec);

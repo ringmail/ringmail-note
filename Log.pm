@@ -4,6 +4,9 @@ use warnings;
 
 use Data::Dumper;
 use Time::HiRes 'gettimeofday', 'tv_interval';
+use Scalar::Util 'blessed';
+use RDF::Trine;
+use RDF::Trine::Serializer::Turtle;
 
 use vars qw($start $timer);
 
@@ -62,7 +65,15 @@ sub log_text
 	{
 		if (ref($i))
 		{
-			$log .= Dumper($i);
+			if (blessed($i) && $i->isa('RDF::Trine::Model'))
+			{
+				my $ser = RDF::Trine::Serializer::Turtle->new();
+				print $ser->serialize_model_to_string($i);
+			}
+			else
+			{
+				$log .= Dumper($i);
+			}
 		}
 		elsif (defined $i)
 		{

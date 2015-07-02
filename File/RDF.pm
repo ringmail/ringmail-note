@@ -4,19 +4,14 @@ use warnings;
 no warnings 'uninitialized';
 
 use Moose;
-use JSON::XS;
 use RDF::Trine::Model;
 use RDF::Trine::Store;
 use RDF::Trine::Store::DBI::SQLite;
 
-use Note::Param;
+use Note::File;
 use Note::RDF::Sparql;
 
-has 'file' => (
-	'is' => 'rw',
-	'isa' => 'Str',
-	'required' => 1,
-);
+use base 'Note::File';
 
 has 'type' => (
 	'is' => 'rw',
@@ -65,7 +60,7 @@ has 'store' => (
 			});
 			return $store;
 		}
-		#die(qq|Invalid rdf store type: '$type'|);
+		die(qq|Invalid store type: '$type'|);
 	},
 );
 

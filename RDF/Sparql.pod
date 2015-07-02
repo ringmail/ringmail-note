@@ -1,0 +1,101 @@
+=head1 NAME
+
+Note::RDF::Sparql
+
+
+=head1 DESCRIPTION
+
+'debug' => 1,
+
+
+=head1 REQUIRES
+
+L<Note::RDF::SAXHandlerGraph> 
+
+L<Note::RDF::SAXHandler> 
+
+L<Note::RDF::NS> 
+
+L<Note::Param> 
+
+L<Carp> 
+
+L<DBI> 
+
+L<Encode> 
+
+L<Scalar::Util> 
+
+L<RDF::Query::Client> 
+
+L<RDF::Query> 
+
+L<RDF::Trine::Store> 
+
+L<RDF::Trine::Node> 
+
+L<RDF::Trine> 
+
+L<Data::Dumper> 
+
+L<Moose> 
+
+
+=head1 METHODS
+
+=head2 add_statement
+
+ add_statement();
+
+=head2 build_sparql
+
+ build_sparql();
+
+=head2 delete
+
+ delete();
+
+=head2 exists
+
+ exists();
+
+alias method for iri_exists
+
+
+=head2 get_expanded_model
+
+ get_expanded_model();
+
+Here is the stuff.
+
+=head2 get_owl_sameas
+
+ get_owl_sameas();
+
+=head2 get_rdf_list
+
+ get_rdf_list();
+
+=head2 get_resource_model
+
+ get_resource_model();
+
+=head2 get_statements
+
+ get_statements();
+
+=head2 insert
+
+ insert();
+
+=head2 iri_exists
+
+ iri_exists();
+
+=head2 query
+
+ query();
+
+
+=cut
+

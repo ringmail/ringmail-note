@@ -6,25 +6,15 @@ no warnings 'uninitialized';
 use Moose;
 use JSON::XS;
 use Note::Param;
+use Note::File;
 
-has 'file' => (
-	'is' => 'rw',
-	'isa' => 'Str',
-	'required' => 1,
-);
+use base 'Note::File';
 
 has 'data' => (
 	'is' => 'rw',
 	'isa' => 'Ref',
 	'default' => sub { return {}; },
 );
-
-sub exists
-{
-	my ($obj, $param) = get_param(@_);
-	my $fn = $obj->file();
-	return (-e $fn);
-}
 
 sub write_file
 {

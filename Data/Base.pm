@@ -1,4 +1,4 @@
-package Note::Data::Instance;
+package Note::Data::Base;
 use strict;
 use warnings;
 

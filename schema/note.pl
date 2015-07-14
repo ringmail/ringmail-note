@@ -56,6 +56,30 @@ $class{'data/enum/item'} = Note::RDF::Class::create({
 	'id' => ns_iri('note', 'class/data/enum/item'),
 });
 
+$class{'data/enum'}->add_property(
+	'id' => ns_iri('note', 'attr/data/enum/item'),
+)->add_range(
+	'class' => ns_iri('note', 'class/data/enum/item'),
+);
+
+$class{'data/enum/item'}->add_property(
+	'id' => ns_iri('note', 'attr/data/enum/item/key'),
+)->add_range(
+	'class' => ns_iri('xsd', 'string'),
+);
+
+$class{'data/enum/item'}->add_property(
+	'id' => ns_iri('note', 'attr/data/enum/item/label'),
+)->add_range(
+	'class' => ns_iri('xsd', 'string'),
+);
+
+$class{'data/enum/item'}->add_property(
+	'id' => ns_iri('note', 'attr/data/enum/item/description'),
+)->add_range(
+	'class' => ns_iri('xsd', 'string'),
+);
+
 $class{'data/model'}->add_property(
 	'id' => ns_iri('note', 'attr/data/model/field'),
 )->add_range(
@@ -131,6 +155,11 @@ $rdf->add_statement(ns_iri('note', 'inst/data/type/float'), ns_iri('rdf', 'type'
 $rdf->add_statement(ns_iri('note', 'inst/data/type/currency'), ns_iri('rdf', 'type'), ns_iri('note', 'class/data/type'));
 $rdf->add_statement(ns_iri('note', 'inst/data/type/date'), ns_iri('rdf', 'type'), ns_iri('note', 'class/data/type'));
 $rdf->add_statement(ns_iri('note', 'inst/data/type/datetime'), ns_iri('rdf', 'type'), ns_iri('note', 'class/data/type'));
+
+$rdf->add_statement(ns_iri('note', 'inst/data/field/length/enum'), ns_iri('rdf', 'type'), ns_iri('note', 'class/data/enum'));
+$rdf->add_statement(ns_iri('note', 'inst/data/field/length/enum/specify'), ns_iri('rdf', 'type'), ns_iri('note', 'class/data/enum/item'));
+$rdf->add_statement(ns_iri('note', 'inst/data/field/length/enum/specify'), ns_iri('note', 'attr/data/enum/item/key'), literal("specify"));
+$rdf->add_statement(ns_iri('note', 'inst/data/field/length/enum'), ns_iri('note', 'attr/data/enum/item'), ns_iri('note', 'inst/data/field/length/enum/specify'));
 
 ::log($fstore->model());
 

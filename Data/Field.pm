@@ -7,10 +7,10 @@ use RDF::Trine;
 use Params::Validate;
 
 use Note::Param;
-use Note::Data::Instance;
+use Note::Data::Base;
 use Note::Data::Type;
 
-use base 'Note::Data::Instance';
+use base 'Note::Data::Base';
 
 has 'key' => (
 	'is' => 'rw',

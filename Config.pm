@@ -17,6 +17,7 @@ use RDF::Trine::Store;
 use Module::Load;
 
 use Note::Param;
+use Note::App;
 use Note::File::JSON;
 use Note::SQL::Database;
 use Note::RDF::Sparql;

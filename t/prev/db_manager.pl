@@ -26,6 +26,8 @@ my $dbm = new Note::DBManager(
 
 my $data = $dbm->json_load($fp);
 
+::log($data);
+
 my $rfile = 'dbm.rdf';
 unlink($rfile) if (-e $rfile);
 my $fstore = new Note::File::RDF(
@@ -36,11 +38,8 @@ $dbm->to_rdf(
 	'rdf' => $fstore->rdf(),
 	'name' => $name,
 	'data' => $data,
+	'base_uri' => 'http://rdf.dyl.com/schema/crm/',
 );
 
-::log(
-	$name,
-	$data,
-	$fstore->model(),
-);
+::log($fstore->model());
 

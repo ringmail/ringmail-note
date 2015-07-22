@@ -117,6 +117,12 @@ $class{'data/field'}->add_property(
 );
 
 $class{'data/field'}->add_property(
+	'id' => ns_iri('note', 'attr/data/field/model'),
+)->add_range(
+	'class' => ns_iri('note', 'class/data/model'),
+);
+
+$class{'data/field'}->add_property(
 	'id' => ns_iri('note', 'attr/data/field/class'),
 )->add_range(
 	'class' => ns_iri('rdfs', 'Class'),

@@ -12,7 +12,7 @@ use Note::Data::Field;
 
 use base 'Note::Data::Base';
 
-has 'field' => (
+has 'fields' => (
 	'is' => 'rw',
 	'isa' => 'HashRef',
 	'default' => sub {

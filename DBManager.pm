@@ -14,6 +14,7 @@ use Note::Param;
 use Note::SQL::Database;
 use Note::RDF::Sparql;
 use Note::RDF::NS ('ns_iri');
+use Note::RDF::Class;
 
 use vars qw(%datatype);
 
@@ -502,7 +503,12 @@ sub to_rdf
 	my $name = $param->{'name'};
 	my $data = $param->{'data'};
 	my $rdf = $param->{'rdf'};
-	my $model = blank();
+	my $base = $param->{'base_uri'};
+	my $model = iri($base. $name);
+	my $class = Note::RDF::Class::create(
+		'rdf' => $rdf,
+		'id' => $model,
+	);
 	$rdf->add_statement($model, ns_iri('rdf', 'type'), ns_iri('note', 'class/data/model'));
 	foreach my $k (sort keys %{$data->{'columns'}})
 	{
@@ -511,12 +517,149 @@ sub to_rdf
 		$type = 'ref' if ($type eq 'record');
 		if ($datatype{$type})
 		{
-			my $col = blank();
+			my $col = iri($base. $name. '/'. $k);
+			my $prop = $class->add_property(
+				'id' => $col,
+			);
 			$rdf->add_statement($col, ns_iri('rdf', 'type'), ns_iri('note', 'class/data/field'));
 			$rdf->add_statement($model, ns_iri('note', 'attr/data/model/field'), $col);
 			$rdf->add_statement($col, ns_iri('note', 'attr/data/field/key'), literal($k));
 			$rdf->add_statement($col, ns_iri('note', 'attr/data/field/type'), ns_iri('note', 'inst/data/type/'. $type));
+			my $dt = undef;
+			if ($type eq 'ref')
+			{
+				if (defined $cv->{'class'}) # any URI
+				{
+					$dt = iri($cv->{'class'});
+					$rdf->add_statement($col, ns_iri('note', 'attr/data/field/class'), $dt);
+				}
+				elsif (defined $cv->{'table'}) # model URI
+				{
+					$dt = iri($base. $cv->{'table'});
+					$rdf->add_statement($col, ns_iri('note', 'attr/data/field/table'), $dt);
+				}
+			}
+			if (defined $dt)
+			{
+				$prop->add_range(
+					'class' => $dt,
+				);
+			}
+			if (defined $cv->{'null'})
+			{
+				$rdf->add_statement($col, ns_iri('note', 'attr/data/field/null'), literal($cv->{'null'}));
+			}
+			if (defined $cv->{'default'})
+			{
+				$rdf->add_statement($col, ns_iri('note', 'attr/data/field/default'), literal($cv->{'default'}));
+			}
+			if (defined $cv->{'default_null'})
+			{
+				$rdf->add_statement($col, ns_iri('note', 'attr/data/field/default_null'), literal($cv->{'default_null'}));
+			}
+			if (defined $cv->{'timestamp'})
+			{
+				$rdf->add_statement($col, ns_iri('note', 'attr/data/field/timestamp'), literal($cv->{'timestamp'}));
+			}
+			if (defined $cv->{'length'})
+			{
+				$rdf->add_statement($col, ns_iri('note', 'attr/data/field/length'), literal($cv->{'length'}));
+				if ($cv->{'length'} eq 'specify')
+				{
+					if (defined $cv->{'length_specify'})
+					{
+						$rdf->add_statement($col, ns_iri('note', 'attr/data/field/length_specify'), literal($cv->{'length_specify'}));
+					}
+				}
+			}
 		}
+	}
+}
+
+sub from_rdf
+{
+	my ($obj, $param) = get_param(@_);
+	my $id = $param->{'id'};
+	my $rdf = $param->{'rdf'};
+	my $base = $param->{'base_uri'};
+	my $model_type = $rdf->get_statements(
+		$id, ns_iri('rdf', 'type'), ns_iri('note', 'class/data/model'),
+	);
+	unless ($model_type->next())
+	{
+		die(q|Model not found: '|. $id->uri_value(). q|'|);
+	}
+	my $prop_iter = $rdf->get_statements(
+		$id, ns_iri('note', 'attr/data/model/field'), undef,
+	);
+	my $data = {};
+	while (my $p = $prop_iter->next())
+	{
+		my $prop = $p->[2];
+		my $prec = {};
+		my $prop_id = undef;
+		my %prop_data = (
+			'note:attr/data/field/key' => sub {
+				my ($s, $p, $v) = @_;
+				$prec->{'name'} = $v->literal_value();
+			},
+			'note:attr/data/field/type' => sub {
+				my ($s, $p, $v) = @_;
+				my $tv = $v->uri_value();
+				my $type_base = ns_iri('note', 'inst/data/type/')->uri_value();
+				$type_base = quotemeta($type_base);
+				if ($tv =~ s/^$type_base//)
+				{
+					$tv = 'record' if ($tv eq 'ref');
+					$prec->{'type'} = $tv;
+				}
+			},
+			'attr/data/field/class' => sub {
+				my ($s, $p, $v) = @_;
+				$prec->{'class'} = $v->uri_value();
+			},
+			'attr/data/field/table' => sub {
+				my ($s, $p, $v) = @_;
+				my $cv = $v->uri_value();
+				my $table_base = quotemeta($base);
+				if ($cv =~ s/^$table_base//)
+				{
+					$prec->{'table'} = $cv;
+				}
+			},
+			'attr/data/field/null' => sub {
+				my ($s, $p, $v) = @_;
+				$prec->{'null'} = $v->literal_value();
+			},
+			'attr/data/field/default' => sub {
+				my ($s, $p, $v) = @_;
+				$prec->{'default'} = $v->literal_value();
+			},
+			'attr/data/field/default_null' => sub {
+				my ($s, $p, $v) = @_;
+				$prec->{'default'} = $v->literal_value();
+			},
+			'attr/data/field/length' => sub {
+				my ($s, $p, $v) = @_;
+				$prec->{'length'} = $v->literal_value();
+			},
+			'attr/data/field/length_specify' => sub {
+				my ($s, $p, $v) = @_;
+				$prec->{'length'} = $v->literal_value();
+			},
+			'attr/data/field/default' => sub {
+				my ($s, $p, $v) = @_;
+				$prec->{'default'} = $v->literal_value();
+			},
+			'attr/data/field/default_null' => sub {
+				my ($s, $p, $v) = @_;
+				$prec->{'default_null'} = $v->literal_value();
+			},
+			'attr/data/field/timestamp' => sub {
+				my ($s, $p, $v) = @_;
+				$prec->{'timestamp'} = $v->literal_value();
+			},
+		);
 	}
 }
 

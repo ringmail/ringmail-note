@@ -21,6 +21,9 @@ has 'database' => (
 	'is' => 'rw',
 	'isa' => 'Note::SQL::Database',
 	'required' => 1,
+	'default' => sub {
+		return $Note::Row::Database;
+	},
 );
 
 has 'handle' => (

@@ -211,7 +211,6 @@ sub run_psgi
 	{
 		$obj->app_name($appname);
 		my $appcls = $obj->app_class();
-		#::_log("App: $appname\n");
 		if (exists $appcls->{$appname})
 		{
 			$obj->app($appcls->{$appname});
@@ -229,6 +228,7 @@ sub run_psgi
 	if (defined $appname)
 	{
 		my $appcfg = $obj->app()->config();
+		# set default SQL database for application
 		my $db = $appcfg->{'sql_database'};
 		$main::app_config = $appcfg;
 		if (defined $db)

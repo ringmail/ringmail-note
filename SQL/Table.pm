@@ -20,9 +20,12 @@ Moose::Exporter->setup_import_methods(
 has 'database' => (
 	'is' => 'rw',
 	'isa' => 'Note::SQL::Database',
-	'required' => 1,
+	'lazy' => 1,
 	'default' => sub {
-		return $Note::Row::Database;
+		my $dbkey = $main::note_config->{'config'}->{'default_sql_database'};
+		my $db = $main::note_config->{'storage'}->{$dbkey};
+		$db ||= $Note::Row::Database;
+		return $db;
 	},
 );
 

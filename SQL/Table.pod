@@ -1,0 +1,111 @@
+=head1 NAME
+
+Note::SQL::Table
+
+
+=head1 DESCRIPTION
+
+Note Table Abstraction
+
+=head1 METHODS
+
+=head2 add
+
+Insert a row from a hashref.
+
+ $table->add({
+   'col1' => 'val1',
+   'col2' => 'val2',
+ });
+
+=head2 count
+
+Return a count of the number of rows found based on the specified WHERE PARAMETERS.
+If no parameters are specified a count of all of the rows in the table will be returned.
+
+ $table->count(
+	<WHERE PARAMETERS>
+ );
+
+=head2 delete
+
+ $table->delete(
+   'table' => '<TABLE>',    (OPTIONAL)
+   'where' => {
+      <WHERE PARAMETERS>
+   },
+ );
+
+=head2 do
+
+ do();
+
+=head2 fetch
+
+ fetch();
+
+=head2 get
+
+Create and execute a SELECT statement to retrieve rows, usually as hashrefs.
+
+ my $resultset = $table->get(
+    'select' => 'field' | ['field_1', 'field_2', 'field_3'],
+        # field or array of fields
+
+    'where' => {'field_1' => 'value'} | [ ... ] | 'SQL',
+        # where clause from DBIx::Abstract
+		# see: https://metacpan.org/pod/DBIx::Abstract#DBIx::Abstract-Where-Clauses
+
+    'order' => 'field_2 asc',
+        # SQL ORDER BY
+
+    'limit' => '10 offset 5',
+        # can be combined with 'order' string: 'order' => 'field_2 asc limit 10'
+
+    'table' => 'table_name t, table_other o',
+        # over-ride table(s) for aliasing
+
+    'join' => 't.id=o.fkey' | ['t.id=o.fkey', 't.other_id=m.other_fkey']
+        # join tables
+
+    'array' => 1,
+        # if this is specified, return rows as arrays instead of hashes
+
+    'result' => 1,
+        # return first row as hash
+        # if specified with 'array' => 1 then return the item first column of the first row
+ );
+
+=head2 last_insert_id
+
+ last_insert_id();
+
+=head2 query
+
+ query();
+
+=head2 set
+
+ set();
+
+=head2 sqltable
+
+ sqltable();
+
+=head1 WHERE PARAMETERS
+
+From: L<https://metacpan.org/pod/DBIx::Abstract#DBIx::Abstract-Where-Clauses>
+
+ {
+  first=>'joe',
+  age=>['>',26],
+  last=>['like',q|b'%|]
+ }
+
+Would produce:
+
+ WHERE first = ? AND last like ? AND age > ?
+
+
+=cut
+

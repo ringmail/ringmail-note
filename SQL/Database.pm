@@ -397,4 +397,18 @@ sub table
 	);
 }
 
+# static method
+sub default_database
+{
+	if (defined $Note::Row::Database)
+	{
+		return $Note::Row::Database;
+	}
+	else
+	{
+		my $dbkey = $main::note_config->{'config'}->{'default_sql_database'};
+		return $main::note_config->{'storage'}->{$dbkey};
+	}
+}
+
 1;

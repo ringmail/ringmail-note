@@ -1,0 +1,278 @@
+=head1 NAME
+
+Note::Page
+
+
+=head1 DESCRIPTION
+
+Note Page object- represents a page being loaded.
+
+
+=head1 COMMONLY USED ATTRIBUTES
+
+$page->form() - Form input parameters (GET and POST combined)
+
+$page->content() - Hashref of data to pass into template ('page' key set to page object by default)
+
+$page->value() - Hashref to pass data between $page object methods
+
+$page->session() - Hashref of global session keyed by client cookie (call $page->session_write() when changed)
+
+=head1 OTHER ATTRIBUTES
+
+$page->app() - Reference to current Note::App object
+
+$page->storage() - Persistent data storage handles
+
+$page->root() - App root
+
+$page->hostname() - Current HTTP hostname of request
+
+$page->port() - Current HTTP port of request
+
+$page->template() - Current template (Note::Template object)
+
+$page->remote_ip() - IP address of remote requestor
+
+$page->request() - Current Plack::Request object
+
+$page->response() - Current Plack::Response object
+
+$page->env() - Unix environment variables hash
+
+$page->body() - Reply body (scalar ref)
+
+=head1 METHODS
+
+=head2 apply
+
+ $page->apply($template, $data);
+
+Apply a template with page reference
+
+Parameters:
+
+$template - template name
+
+$data - data fields for template
+
+=head2 button
+
+ $page->button(
+  'command' => 'cmd_name',
+  'args' => ['a', 'b'],
+  'text' => 'Button 1',
+  'opts' => {
+    'onclick' => q|do_something('jscode');|     # avoid " (double-quotes) within HTML tag args
+  },
+ );
+
+ $page->button(
+  'command' => 'cmd_name_2',
+  'image' => '/img/image_path.jpg',
+ );
+
+Generate a button for placement on a HTML page
+
+Parameters:
+
+command - Command name (string)
+
+args - Command arguments (arrayref)
+
+opts - HTML extra attributes (hashref)
+
+contents - HTML tag inner contents (string)
+
+tag - HTML tag name (string) - default: "button"
+
+type - HTML input tag type (string) - default: "submit"
+
+image - Image url for image buttons
+
+text - Button text for text buttons
+
+
+=head2 field
+
+ $page->field(
+   'type' => ' ... ',
+   'name' => 'field_name_1',
+   'command' => 'cmd_name',
+ );
+
+Input fields associated with specific commands.
+
+Field Types: text, checkbox, select, radio, textarea, password, file, hidden
+
+Text Field:
+
+ $page->field(
+    'command' => 'command_name',
+    'type' => 'text',
+    'name' => 'field_name',
+    'value' => 'initial value', # optional
+    'opts' => {  'style' => 'width: 10px;'  },
+        # optional, parameters passed directly to <input> tag.
+ );
+
+Checkbox:
+
+ $page->field(
+    'command' => 'command_name',
+    'type' => 'checkbox',
+    'name' => 'field_name',
+    'checked' => 1,
+ );
+
+Pop-Up Select Box:
+
+ $page->field(
+    'command' => 'command_name',
+    'type' => 'select',
+    'name' => 'field_name',
+    'select' => [      # the select field ("field_name") will return the second item in these arrayrefs, item [1]
+        ['Option 1', 'opt_1'],
+        ['Option 2', 'opt_2'],
+        [ \'=SEPARATOR=' ], # use a SCALAR REF for a separator
+        ['Option 3', 'opt_3'],
+    ],
+    'selected' => 'opt_2', # defaults to first item
+ );
+
+Radio Buttons:
+
+ $page->field(
+    'command' => 'command_name',
+    'type' => 'radio',
+    'name' => 'field_name',
+    'value' => 'opt_A',
+    'checked' => 1,
+ ). ' A'. '<br/>';
+ $page->field(
+    'command' => 'command_name',
+    'type' => 'radio',
+    'name' => 'field_name',
+    'value' => 'opt_B',
+    'checked' => 0,
+ ). ' B';
+
+
+=head2 hidden
+
+ $page->hidden($data);
+
+Add a hidden field HTML tag.
+
+$data - Hashref of key/value pairs to create hidden input tags for. One separate tag will be created for each pair.
+
+=head2 init
+
+ init();
+
+Method to run page initialization. This is automatically called first when the page is loaded.
+
+
+=head2 link
+
+ $page->link(
+   'command' => 'cmd_name'.
+   'args' => ['arg1', 'arg2'],
+   'text' => 'Link Text',
+ );
+
+Generate a link with an embedded command.
+
+Parameters:
+
+command - Command name (string)
+
+args - Command arguments list (arrayref)
+
+text - Link text (string)
+
+query - URL query params (hashref)
+
+name - HTML anchor name (string) - <a name="foobar" ...
+
+path - URL path component (string)
+
+host - URL host component (string)
+
+proto - URL protocol component (string) - "http" or "https" most likely
+
+=head2 load
+
+ load();
+
+Method to load the page contents. This is automatically called after init() and an optional command is run.
+
+
+=head2 param
+
+ param();
+
+Internal get_params() method. Do not use.
+
+=head2 redirect
+
+ $page->redirect($url);
+
+Redirect the browser to another URL.
+
+
+=head2 run_command
+
+ run_command();
+
+Run a command, if there is one specified.
+
+
+=head2 session_write
+
+ $page->session_write();
+
+Indicate that the session has been updated so it can be persistently stored.
+
+
+=head2 style
+
+ $page->style($data);
+
+Generate CSS stylesheet elements from a hashref.
+
+ {
+   'border-collapse' => 'collapse',
+   'border-spacing' => '0',
+   'border-width' => '0',
+ }
+ 
+Becomes:
+
+  border-collapse: collapse;
+  border-spacing: 0;
+  border-width: 0;
+
+=head2 url
+
+ $page->url($params);
+
+Build a URL (based on the current page path).
+
+If $params is empty it will return the current full path (including protocol and host)
+
+Parameters:
+
+query - URL query params (hashref)
+
+path - URL path component (string)
+
+host - URL host component (string)
+
+proto - URL protocol component (string) - "http" or "https" most likely
+
+port - URL port component (string)
+
+
+=cut
+

@@ -120,10 +120,23 @@ sub transaction
 		die('Source and destination accounts must be different');
 	}
 	my $amt = $param->{'amount'};
-	$amt = nearest(0.0001, $amt);
+	unless (defined $amt)
+	{
+		die('Tranaction amount not defined');
+	}
+	$amt = nearest(0.01, $amt);
 	unless ($amt =~ /^(\-)?\d+(\.\d{1,4})?$/)
 	{
 		die('Invalid transaction amount: '. $amt);
+	}
+	if ($amt == 0)
+	{
+		die('Zero value transactions not allowed');
+	}
+	my $txtype = $param->{'tx_type'};
+	unless ($txtype =~ /^\d+$/)
+	{
+		$txtype = tx_type_id($txtype);
 	}
 	my $ts = strftime("%F %T", localtime(time()));
 	my $txrec = Note::Row::create('account_transaction', {
@@ -132,7 +145,7 @@ sub transaction
 		'acct_dst' => $dst->{'id'},
 		'amount' => $amt,
 		'entity' => $param->{'entity'},
-		'tx_type' => $param->{'tx_type'},
+		'tx_type' => $txtype,
 		'user_id' => $param->{'user_id'},
 	});
 	return $txrec->{'id'};
@@ -157,10 +170,10 @@ sub prev_balance
 	my $q = sqltable('account_log')->get(
 		'array' => 1,
 		'result' => 1,
-		'select' => 'balance',
+		'select' => 'balance_prev',
 		'where' => {
-			'last_tx' => ['<', $txid],
-			'account' => $obj->{'id'},
+			'tx_prev' => ['<', $txid],
+			'account_id' => $obj->{'id'},
 		},
 		'order' => 'id desc limit 1',
 	);

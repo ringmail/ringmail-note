@@ -14,7 +14,7 @@ no warnings 'uninitialized';
 
 sub table_sql
 {
-	my ($obj, $name, $data, $schref) = @_;
+	my ($obj, $name, $data, $schref, $platform) = @_;
 	my $translator = new SQL::Translator(
 		'no_comments' => 1,
 	);
@@ -68,18 +68,31 @@ sub table_sql
 		}
 		return 1;
 	});
-	my $sql = $translator->translate(
-		'producer' => 'MySQL',
-		'producer_args' => {
-			'mysql_version' => 5,
-		},
-	);
-	unless (defined $sql)
+	my $sql = '';
+	my @pts = ();
+	$platform ||= 'mysql';
+	if ($platform eq 'mysql')
 	{
-		die ('SQL translate error');
+		$sql = $translator->translate(
+			'producer' => 'MySQL',
+			'producer_args' => {
+				'mysql_version' => 5,
+			},
+		);
+		unless (defined $sql)
+		{
+			die ('SQL translate error');
+		}
+		while ($sql =~ s/^(.*?index.*?)\((\d+)\)\`/$1`($2)/im) { 1; }
+		@pts = split /\n\n/, $sql;
 	}
-	while ($sql =~ s/^(.*?index.*?)\((\d+)\)\`/$1`($2)/im) { 1; }
-	my @pts = split /\n\n/, $sql;
+	elsif ($platform eq 'sqlite')
+	{
+		$sql = $translator->translate(
+			'producer' => 'SQLite',
+		);
+		@pts = (undef, $sql);
+	}
 	return $pts[1];
 }
 

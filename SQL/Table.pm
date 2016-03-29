@@ -22,9 +22,7 @@ has 'database' => (
 	'isa' => 'Note::SQL::Database',
 	'lazy' => 1,
 	'default' => sub {
-		my $dbkey = $main::note_config->{'config'}->{'default_sql_database'};
-		my $db = $main::note_config->{'storage'}->{$dbkey};
-		$db ||= $Note::Row::Database;
+		my $db = Note::SQL::Database::default_database();
 		return $db;
 	},
 );
@@ -72,11 +70,11 @@ sub do
 	if (defined $param->{'query'})
 	{
 		$sql = $param->{'query'};
-		my $sth = $obj->query(
+		my $sth = $obj->_query(
 			'sql' => $sql,
 			'bind' => $bind,
 		);
-		return $obj->fetch({
+		return $obj->_fetch({
 			'sth' => $sth,
 			%$param,
 		});
@@ -84,7 +82,7 @@ sub do
 	elsif (defined $param->{'sql'})
 	{
 		$sql = $param->{'sql'};
-		my $sth = $obj->query(
+		my $sth = $obj->_query(
 			'sql' => $sql,
 			'bind' => $bind,
 		);
@@ -95,7 +93,7 @@ sub do
 	}
 }
 
-sub select_param
+sub _select_param
 {
 	my ($obj, $param) = get_param(@_);
 	my $sel = {};
@@ -136,7 +134,7 @@ sub select_param
 	return $sel;
 }
 
-sub fetch
+sub _fetch
 {
 	my ($obj, $param) = get_param(@_);
 	my $sth = $param->{'sth'};
@@ -206,13 +204,13 @@ sub fetch
 sub get
 {
 	my ($obj, $param) = get_param(@_);
-	my $sel = $obj->select_param($param);
+	my $sel = $obj->_select_param($param);
 	my ($sql, $bind) = $SQLGEN->select($sel);
-	my $sth = $obj->query(
+	my $sth = $obj->_query(
 		'sql' => $sql,
 		'bind' => $bind,
 	);
-	return $obj->fetch({
+	return $obj->_fetch({
 		'sth' => $sth,
 		%$param,
 	});
@@ -229,7 +227,7 @@ sub count
 	);
 }
 
-sub query
+sub _query
 {
 	my ($obj, $param) = get_param(@_);
 	my $sql = $param->{'sql'};
@@ -274,7 +272,7 @@ sub query
 			if ($param->{'retry'} < 3)
 			{
 				$param->{'retry'}++;
-				return $obj->query($param);
+				return $obj->_query($param);
 			}
 		}
 		else
@@ -322,7 +320,7 @@ sub set
 	}
 	if (defined $sql)
 	{
-		my $sth = $obj->query(
+		my $sth = $obj->_query(
 			'sql' => $sql,
 			'bind' => $bind,
 		);
@@ -346,7 +344,7 @@ sub delete
 		$del->{'where'} = $param->{'where'};
 	}
 	my ($sql, $bind) = $SQLGEN->delete($del);
-	my $sth = $obj->query(
+	my $sth = $obj->_query(
 		'sql' => $sql,
 		'bind' => $bind,
 	);
@@ -356,10 +354,10 @@ sub delete
 sub last_insert_id
 {
 	my ($obj) = @_;
-	my $sth = $obj->query(
+	my $sth = $obj->_query(
 		'sql' => 'select last_insert_id()',
 	);
-	return $obj->fetch({
+	return $obj->_fetch({
 		'sth' => $sth,
 		'array' => 1,
 		'result' => 1,

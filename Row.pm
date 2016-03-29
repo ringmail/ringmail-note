@@ -14,8 +14,12 @@ sub new
 {
 	my ($class, $table, $lkup, @extra) = @_;
 	my $param = (ref($extra[0])) ? $extra[0] : {@extra};
-	my $db = $param->{'database'} || $Database;
+	my $db = $param->{'database'} || Note::SQL::Database::default_database();
 	my $fields = $param->{'select'} || ['id'];
+	unless (defined $db)
+	{
+		die(q|Undefined database|);
+	}
 	unless ($db->isa('Note::SQL::Database'))
 	{
 		die(q|Invalid database|);
@@ -204,7 +208,7 @@ sub create
 		die('Invalid create data');
 	}
 	my $param = (ref($extra[0])) ? $extra[0] : {@extra};
-	my $db = $param->{'database'} || $Database;
+	my $db = $param->{'database'} || Note::SQL::Database::default_database();
 	my $seq = $param->{'sequence'};
 	unless (defined $seq)
 	{
@@ -259,7 +263,7 @@ sub insert
 		die('Invalid insert data');
 	}
 	my $param = (ref($extra[0])) ? $extra[0] : {@extra};
-	my $db = $param->{'database'} || $Database;
+	my $db = $param->{'database'} || Note::SQL::Database::default_database();
 	my $tbl = $db->table($table);
 	$tbl->set(
 		'insert' => $data,
@@ -312,7 +316,8 @@ sub delete
 # static method
 sub table
 {
-	return $Database->table(@_);
+	my $db = Note::SQL::Database::default_database();
+	return $db->table(@_);
 }
 
 1;

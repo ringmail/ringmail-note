@@ -41,6 +41,10 @@ sub update_pod
 	}
 	unless (-e $podfile)
 	{
+		if ($param->{'generate'})
+		{
+			return $obj->generate_pod();
+		}
 		die(qq|POD file does not exist: '$podfile'|);
 	}
 	my $ap = new Pod::Autopod(

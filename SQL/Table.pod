@@ -29,7 +29,12 @@ If no parameters are specified a count of all of the rows in the table will be r
 
 =head2 delete
 
- $table->delete(
+Delete rows from the table based on WHERE PARAMETERS.
+Delete ALL rows if "where" key is not specified.
+
+Returns the number of rows deleted.
+
+ my $deleted_row_count = $table->delete(
    'table' => '<TABLE>',    (OPTIONAL)
    'where' => {
       <WHERE PARAMETERS>
@@ -38,11 +43,9 @@ If no parameters are specified a count of all of the rows in the table will be r
 
 =head2 do
 
- do();
+ Execute a SQL statement on the database.
 
-=head2 fetch
-
- fetch();
+ $table->do("<SQL>");
 
 =head2 get
 
@@ -76,13 +79,33 @@ Create and execute a SELECT statement to retrieve rows, usually as hashrefs.
         # if specified with 'array' => 1 then return the item first column of the first row
  );
 
+Returns an arrayref of hashrefs by default.
+
+ [
+   {
+     'id' => 1,
+     'col1' => 'val1',
+   },
+   {
+     'id' => 2,
+     'col1' => 'val2',
+   },
+ ],
+
+If 'array' parameter is set it will return an array of arrays.
+ 
+ [
+  [1, 'val1'],
+  [2, 'val2'],
+ ],
+
+If 'result' parameter is set without 'array' it will return the first row as a hashref.
+
+If 'result' AND 'array' paramters are set it will return the first column of the first row. (Useful for getting a single value).
+
 =head2 last_insert_id
 
  last_insert_id();
-
-=head2 query
-
- query();
 
 =head2 set
 

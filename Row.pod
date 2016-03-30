@@ -1,0 +1,136 @@
+=head1 NAME
+
+Note::Row
+
+
+=head1 DESCRIPTION
+
+Object to represent a single row from one table in the database.
+
+This representation keeps cached copies of column data so this data.
+
+Work with Note-style tables only. This means the primary key for the table must be one column, an integer, and named 'id'.
+
+=head1 METHODS
+
+=head2 new
+
+ my $row = new Note::Row('table_name' => $primary_key);
+
+Load a row from a table ('table_name') based the primary key.
+
+ my $row = new Note::Row('table_name' => {'col1' => 'match_data', ...});
+
+Load a row from a table ('table_name') based a query. It will return the first row returned by the query, sorted in descending order. This will return the last item added to the table that matches the query.
+
+ my $row = new Note::Row('table_name' => {'col1' => 'match_data', ...}, {
+   'select' => ['other_col2', 'more_col3'],
+ });
+
+Same as above, except load additional column values into cache on the first query.
+
+This method causes a query to be sent to the database to ensure the row actually exists. After the row is loaded $row->id() can be checked for a value to see if a row was found.
+
+
+=head2 create
+
+ my $row = Note::Row::create('table_name', {'col1' => 'data', ...});
+
+Static method
+
+Used to create new rows in the database. Primary keys are typically not specified since they are usually generated within the database.
+
+Returns a Note::Row object of the newly created row.
+
+Dies on SQL failures such as duplicate entries.
+
+
+=head2 data
+
+ $row->data();
+
+Return all columns as a hashref.
+
+ $row->data('col1');
+
+Return one column as a scalar.
+
+ $row->data('col1', 'col2', ...);
+
+Return multiple columns as a hashref.
+
+=head2 delete
+
+ $row->delete();
+
+Attempt to delete the row from the database table.
+
+=head2 find_create
+
+ my $row = Note::Row::find_create('table_name', $find_data, $create_data, $create_ref);
+
+Static method
+
+Find or create a table row using a sequence table or sequence mechanism besides SQL-based automatic increment.
+
+$find_data - Column values used to match a current record
+
+$create_data - (Optional) Additional column data to add to a newly created row but only if an existing row is not found
+
+$create_ref - (Optional) A scalarref that is updated to 1 if an existing row was not found and a new one was created.
+
+=head2 find_insert
+
+ my $row = Note::Row::find_insert
+
+Static method
+
+Same as find_create() except works with SQL automatic increment.
+
+=head2 id
+
+ $row->id();
+
+Return the value of the primary key (Note assumes this is also named 'id').
+
+=head2 insert
+
+ my $row = Note::Row::insert(...);
+
+Static method
+
+Same as create() except works with SQL automatic increment. Internally calls last_insert_id() to get the primary key of the row that was inserted.
+
+
+=head2 row
+
+ my $foreign_row = $row->row('col_name', 'other_table');
+
+Follow a foreign-key relationship to another table ('other_table') and return a Note::Row object representing the linked row based on that row's primary key stored in the column specified ('col_name').
+
+=head2 table
+
+ Note::SQL::table(...);
+
+Static method
+
+Return a table object.
+
+Please use sqltable() from Note::SQL::Table instead.
+
+
+=head2 update
+
+ $row->update({'col1' => 'value', 'col2' => 'value2'});
+
+Issue an SQL UPDATE statement to modify the column values for a row. The update is sent immediately and the cache of the object is updated also.
+
+=head2 valid
+
+ $row->valid();
+
+Checks database table with a count statement and returns true if the row is still found in the table, otherwise returns false.
+
+
+=cut
+

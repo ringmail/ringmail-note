@@ -234,20 +234,20 @@ sub card_payment {
         );
     }
 
-    #	elsif ($proc =~ /^authorizenet$/i)
-    #	{
-    #		return payment_authorizenet(
-    #			'callback' => $param->{'callback'},
-    #			'nofork' => $param->{'nofork'},
-    #			'amount' => $param->{'amount'},
-    #			'card_id' => $cid,
-    #			'acct_dst' => $param->{'account'},
-    #			'operator' => $param->{'operator'},
-    #			'ip' => $param->{'ip'},
-    #			%$cd,
-    #			%$ct,
-    #		);
-    #	}
+    # elsif ($proc =~ /^authorizenet$/i)
+    # {
+    #  return payment_authorizenet(
+    #   'callback' => $param->{'callback'},
+    #   'nofork' => $param->{'nofork'},
+    #   'amount' => $param->{'amount'},
+    #   'card_id' => $cid,
+    #   'acct_dst' => $param->{'account'},
+    #   'operator' => $param->{'operator'},
+    #   'ip' => $param->{'ip'},
+    #   %$cd,
+    #   %$ct,
+    #  );
+    # }
 }
 
 # static method
@@ -293,25 +293,25 @@ sub payment_paypal {
             'sandbox'   => ( $cfg->{'paypal_sandbox'} ) ? 1 : 0,
         );
 
-        #		::log({
-        #			'PaymentAction' => 'Sale',
-        #			'OrderTotal' => $param->{'amount'},
-        #			'CreditCardType' => $param->{'cc_type'},
-        #			'CreditCardNumber' => $param->{'cc_num'},
-        #			'ExpMonth' => $param->{'cc_expm'},
-        #			'ExpYear' => $param->{'cc_expy'},
-        #			'CVV2' => $param->{'cc_cvv2'},
-        #			'FirstName' => $param->{'first_name'},
-        #			'LastName' => $param->{'last_name'},
-        #			'Street1' => $param->{'address'},
-        #			'Street2' => $param->{'address2'},
-        #			'CityName' => $param->{'city'},
-        #			'StateOrProvince' => $param->{'state'},
-        #			'PostalCode' => $param->{'zip'},
-        #			'Country' => 'US',
-        #			'CurrencyID' => 'USD',
-        #			'IPAddress' => $param->{'ip'},
-        #		});
+        #  ::log({
+        #   'PaymentAction' => 'Sale',
+        #   'OrderTotal' => $param->{'amount'},
+        #   'CreditCardType' => $param->{'cc_type'},
+        #   'CreditCardNumber' => $param->{'cc_num'},
+        #   'ExpMonth' => $param->{'cc_expm'},
+        #   'ExpYear' => $param->{'cc_expy'},
+        #   'CVV2' => $param->{'cc_cvv2'},
+        #   'FirstName' => $param->{'first_name'},
+        #   'LastName' => $param->{'last_name'},
+        #   'Street1' => $param->{'address'},
+        #   'Street2' => $param->{'address2'},
+        #   'CityName' => $param->{'city'},
+        #   'StateOrProvince' => $param->{'state'},
+        #   'PostalCode' => $param->{'zip'},
+        #   'Country' => 'US',
+        #   'CurrencyID' => 'USD',
+        #   'IPAddress' => $param->{'ip'},
+        #  });
         my %resp;
         eval {
             %resp = $pp->DoDirectPaymentRequest(

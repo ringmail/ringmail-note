@@ -61,6 +61,10 @@ sub upload
 	{
 		$args->{'expires'} = $param->{'expires'};
 	}
+	if (defined $param->{'acl_short'})
+	{
+		$args->{'acl_short'} = $param->{'acl_short'};
+	}
 	#::log("Upload", $args);
 	my $s3obj = $bucket->object(%$args);
 	$s3obj->put_filename($file);

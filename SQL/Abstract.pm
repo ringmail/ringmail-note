@@ -103,19 +103,50 @@ sub __where_hash {
 }
 
 sub delete {
-	my($self,$table,$where) = @_;
-	# $table == Name of table to update
-	# $where == One of my handy-dandy standard where's.	See __where.
-	my($sql,@keys,$i);
-	if (ref($table)) {
-		$where = $$table{'where'};
-		$table = $$table{'table'};
+	my ($self,$param) = @_;
+	#$table == Name of table to update
+	#$where == One of my handy-dandy standard where's.	See __where.
+	my ($sql,@keys,$i);
+	my ($where, $table, $join);
+	if (ref($param))
+	{
+		$where = $$param{'where'};
+		$table = $$param{'table'};
+		$join = $$param{'join'};
 	}
 
 	$table or die 'Note::Abstract: delete must have table';
 
-	my($res,@bind_params) = $self->__where($where);
-	$sql = "DELETE FROM $table".$res;
+	if ($join) {
+		unless (ref($join)) {
+			$join = [$join];
+		}
+		if ($where) {
+			$where = [$where];
+		} else {
+			$where = [];
+		}
+		foreach (@{$join}) {
+			push(@$where,'and') if $#$where>-1;
+			push(@$where, [$_]);
+		}
+	}
+	my ($res,@bind_params) = $self->__where($where);
+	if (defined $param->{'delete'})
+	{
+		my $del = $param->{'delete'};
+		unless (ref($del))
+		{
+			$del = [$del];
+		}
+		$del = join(',', @$del);
+		$sql = "DELETE $del FROM $table". $res;
+	}
+	else
+	{
+		$sql = "DELETE FROM $table". $res;
+	}
+	#::log("SQL: $sql");
 	return $sql, \@bind_params;
 }
 

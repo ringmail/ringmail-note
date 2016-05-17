@@ -337,12 +337,11 @@ sub delete
 	my ($obj, $param) = get_param(@_);
 	my $del = {
 		'table' => $param->{'table'},
+		'join' => $param->{'join'},
+		'delete' => $param->{'delete'},
+		'where' => $param->{'where'},
 	};
 	$del->{'table'} //= $obj->table();
-	if (defined $param->{'where'})
-	{
-		$del->{'where'} = $param->{'where'};
-	}
 	my ($sql, $bind) = $SQLGEN->delete($del);
 	my $sth = $obj->_query(
 		'sql' => $sql,

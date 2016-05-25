@@ -241,6 +241,7 @@ sub table_parse
 sub table_diff
 {
 	my ($obj, $currentsql, $newsql, $tname) = @_;
+	$currentsql =~ s{ AUTO_INCREMENT=\d+}{}m;
 	my $curschema = $obj->table_parse($currentsql);
 	my $newschema = $obj->table_parse($newsql);
 	foreach my $t ($curschema->get_tables())

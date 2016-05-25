@@ -21,7 +21,14 @@ sub new
 	my $rc = new Note::Row('account' => {'user_id' => $id});
 	unless (defined $rc->id())
 	{
-		die(qq|Invalid account: '$id'|);
+		my $ts = strftime("%F %T", gmtime());
+		$rc = Note::Row::create('account' => {
+			'balance' => 0,
+			'ts_created' => $ts,
+			'ts_updated' => $ts,
+			'user_id' => $id,
+		}); # create on the fly
+		#die(qq|Invalid account: '$id'|);
 	}
 	my $obj = {
 		'id' => $rc->id(),

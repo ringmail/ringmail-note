@@ -16,6 +16,7 @@ sub apply
 	my ($obj, $path, $data) = @_;
 	my $t = new Template({
 		'INCLUDE_PATH' => $obj->root(),
+		'EVAL_PERL' => 1,
 	});
 	my $res = '';
 	unless ($t->process($path, $data, \$res))

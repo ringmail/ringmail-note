@@ -622,6 +622,17 @@ sub field
 			}],
 		);
 	}
+	elsif ($type eq 'color')
+	{
+		return xml(
+			'input', [{
+				'type' => 'color',
+				'value' => $param->{'value'},
+				'name' => $n,
+				%opts,
+			}],
+		);
+	}
 	elsif ($type eq 'select')
 	{
 		$param->{'size'} = 1 unless ($param->{'size'});

@@ -103,7 +103,7 @@ text - Button text for text buttons
 
 Input fields associated with specific commands.
 
-Field Types: text, checkbox, select, radio, textarea, password, file, hidden
+Field Types: text, checkbox, select, radio, textarea, password, file, hidden, color 
 
 Text Field:
 
@@ -123,6 +123,15 @@ Checkbox:
     'type' => 'checkbox',
     'name' => 'field_name',
     'checked' => 1,
+ );
+
+Color:
+
+ $page->field(
+    'command' => 'command_name',
+    'type' => 'color',
+    'name' => 'field_name',
+    'value' => '#009AFF',
  );
 
 Pop-Up Select Box:

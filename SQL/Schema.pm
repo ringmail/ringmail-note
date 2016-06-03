@@ -219,6 +219,13 @@ sub field_sql
 	{
 		$field->default_value($fld->{'default'});
 	}
+	elsif ($type eq 'text' || $type eq 'binary')
+	{
+		if ($fld->{'default_null'})
+		{
+			$field->default_value(\'NULL');
+		}
+	}
 	return $field->schema();
 }
 

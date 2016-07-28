@@ -136,10 +136,10 @@ sub transaction
 	{
 		die('Invalid transaction amount: '. $amt);
 	}
-	if ($amt == 0)
-	{
-		die('Zero value transactions not allowed');
-	}
+#	if ($amt == 0)
+#	{
+#		die('Zero value transactions not allowed');
+#	}
 	my $txtype = $param->{'tx_type'};
 	unless ($txtype =~ /^\d+$/)
 	{

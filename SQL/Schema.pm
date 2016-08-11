@@ -272,6 +272,7 @@ sub table_diff
 		'output_db' => 'MySQL',
 		'source_schema' => $curschema,
 		'target_schema' => $newschema,
+		producer_args => { quote_identifiers => 1, },
 		#%$options_hash,
 	})->compute_differences()->produce_diff_sql();
 	if ($diff =~ /-- No differences found;/m)
@@ -539,4 +540,3 @@ sub field_from_sql
 }
 
 1;
-

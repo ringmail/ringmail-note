@@ -61,6 +61,10 @@ sub table_sql
 				'fields' => [@{$idata->{'columns'}}],
 			);
 		}
+                for my $constraint_name ( keys %{ $data->{constraint} } ) {
+                    my $constraint = $data->{constraint}->{$constraint_name};
+                    $table->add_constraint( name => $constraint_name, type => 'foreign key', fields => $constraint->{fields}, reference_table => $constraint->{reference_table}, reference_fields => $constraint->{reference_fields}, );
+                }
 		$schema->add_table($table);
 		if (ref($schref))
 		{

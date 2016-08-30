@@ -113,7 +113,7 @@ sub _select_param
 	{
 		if (ref($param->{'table'}) and $param->{'table'} =~ /ARRAY/)
 		{
-			$sel->{'table'} = join(',', @{$param->{'table'}});
+			$sel->{'table'} = join(' JOIN ', @{$param->{'table'}});
 		}
 		else
 		{
@@ -369,4 +369,3 @@ if ($::config{'production'})
 }
 
 1;
-

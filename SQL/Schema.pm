@@ -287,6 +287,7 @@ sub table_diff
 		'source_schema' => $curschema,
 		'target_schema' => $newschema,
 		producer_args => { quote_identifiers => 1, },
+		no_batch_alters => 1,
 		#%$options_hash,
 	})->compute_differences()->produce_diff_sql();
 	if ($diff =~ /-- No differences found;/m)

@@ -61,6 +61,20 @@ sub table_sql
 				'fields' => [@{$idata->{'columns'}}],
 			);
 		}
+                for my $constraint_name ( keys %{ $data->{constraint} } ) {
+                    my $constraint = $data->{constraint}->{$constraint_name};
+                    $table->add_constraint(
+
+                        name             => $constraint_name,
+                        type             => 'foreign key',
+                        fields           => $constraint->{columns},
+                        reference_table  => $constraint->{reference_table},
+                        reference_fields => $constraint->{reference_columns},
+                        on_update        => $constraint->{on_update},
+                        on_delete        => $constraint->{on_delete},
+
+                    );
+                }
 		$schema->add_table($table);
 		if (ref($schref))
 		{
@@ -273,6 +287,7 @@ sub table_diff
 		'source_schema' => $curschema,
 		'target_schema' => $newschema,
 		producer_args => { quote_identifiers => 1, },
+		no_batch_alters => 1,
 		#%$options_hash,
 	})->compute_differences()->produce_diff_sql();
 	if ($diff =~ /-- No differences found;/m)

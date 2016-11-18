@@ -9,11 +9,11 @@ use vars qw(@ISA @EXPORT);
 
 use Note::Log;
 use Note::Row;
-use Note::SQL::Table 'sqltable';
+use Note::SQL::Table 'sqltable', 'transaction';
 
 require Exporter;
 @ISA = qw(Exporter);
-@EXPORT = qw(sqltable); 
+@EXPORT = qw(sqltable transaction);
 
 1;
 

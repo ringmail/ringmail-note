@@ -119,6 +119,22 @@ sub query
 	return $res;
 }
 
+sub txn
+{
+	my $obj = shift;
+	my $subr = shift;
+	my $h = $obj->handle();
+	unless ($h->isa('DBIx::Connector'))
+	{
+		die('Transactions only supported with DBIx::Connector');
+	}
+	unless (ref($subr) eq 'CODE')
+	{
+		die('Transactions requires a subroutine reference');
+	}
+	return $h->txn('fixup' => $subr);
+}
+
 sub dbi
 {
 	my $obj = shift;

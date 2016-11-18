@@ -14,7 +14,7 @@ use Note::SQL::Abstract;
 use Note::SQL::Database;
 
 Moose::Exporter->setup_import_methods(
-	'as_is' => ['sqltable'],
+	'as_is' => ['sqltable', 'transaction'],
 );
 
 has 'database' => (
@@ -56,6 +56,14 @@ sub sqltable
 		$param{'database'} = $db;
 	}
 	return __PACKAGE__->new(\%param);
+}
+
+sub transaction
+{
+	my $subr = shift;
+	my $db = shift;
+	$db ||= Note::SQL::Database::default_database();
+	return $db->txn($subr);
 }
 
 sub do

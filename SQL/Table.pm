@@ -277,6 +277,7 @@ sub _query
 	{
 		if ($@ =~ /^DBD::mysql::st execute failed: MySQL server has gone away/)
 		{
+			$param->{'retry'} ||= 0;
 			if ($param->{'retry'} < 3)
 			{
 				$param->{'retry'}++;
